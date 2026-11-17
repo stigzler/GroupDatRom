@@ -27,6 +27,8 @@ namespace GroupDatRom.Views
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            mainVM.OnViewClosing();
+
             Properties.Settings.Default.WindowSize = new System.Drawing.Size((int)this.Width, (int)this.Height);
             Properties.Settings.Default.Save();
         }

@@ -34,5 +34,17 @@ namespace GroupDatRom.Properties {
                 this["WindowSize"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastRomDirPath {
+            get {
+                return ((string)(this["LastRomDirPath"]));
+            }
+            set {
+                this["LastRomDirPath"] = value;
+            }
+        }
     }
 }

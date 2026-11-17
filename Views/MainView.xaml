@@ -9,6 +9,7 @@
         xmlns:vm="clr-namespace:GroupDatRom.ViewModels"
         xmlns:convs="clr-namespace:GroupDatRom.Converters"
         xmlns:properties="clr-namespace:GroupDatRom.Properties"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         ui:WindowHelper.UseModernWindowStyle="True"
         ui:WindowHelper.SystemBackdropType="Mica"
         d:DataContext="{d:DesignInstance Type=vm:MainVM, IsDesignTimeCreatable=True}"
@@ -16,28 +17,70 @@
         d:Background="#202020" d:Foreground="Gainsboro"
         Height="{Binding Source={x:Static properties:Settings.Default},Path=WindowSize.Height}"
         Width="{Binding Source={x:Static properties:Settings.Default},Path=WindowSize.Width}"
+        MinHeight="600" MinWidth="800"
         Title="GroupDatRom" WindowStartupLocation="CenterScreen" Closing="Window_Closing">
 
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ui:ThemeResources  AccentColor="#553e98" />
+                <ui:ThemeResources AccentColor="#009000" />
                 <ui:ThemeResources RequestedTheme="Dark"/>
                 <ui:XamlControlsResources />
             </ResourceDictionary.MergedDictionaries>
-            <!--other resources here (if exists)-->
+            <convs:NodeTypeToImageConverter x:Key="NodeTypeToImageConverter"/>
             <convs:InverseBoolConverter x:Key="InverseBoolConverter"/>
+            <convs:ZeroToFalseConverter x:Key="ZeroToFalseConverter"/>
+            <!-- Force classic visible scrollbars on TreeViews -->
+            <!-- Custom ScrollBar Style for Visible, Styled Handles -->
+            <Style TargetType="{x:Type ScrollBar}">
+                <Setter Property="Background" Value="#40000000"/>
+                <Setter Property="Width" Value="10"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ScrollBar}">
+                            <Grid x:Name="Root" Background="{TemplateBinding Background}">
+                                <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                    <Track.Thumb>
+                                        <Thumb>
+                                            <Thumb.Template>
+                                                <ControlTemplate TargetType="{x:Type Thumb}">
+                                                    <!-- Thumb handle color and shape -->
+                                                    <Border Background="#808080" 
+                                                            CornerRadius="4" 
+                                                            Margin="2,1"/>
+                                                </ControlTemplate>
+                                            </Thumb.Template>
+                                        </Thumb>
+                                    </Track.Thumb>
+                                </Track>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="{x:Type FrameworkElement}">
+                <Setter Property="ToolTipService.BetweenShowDelay" Value="500"/>
+                <Setter Property="ToolTipService.InitialShowDelay" Value="400"/>
+                <Setter Property="ToolTipService.IsEnabled" Value="false"/>
+            </Style>
+
         </ResourceDictionary>
+
     </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="40"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
 
         <!-- Top Header Bar -->
-        <Border Background="#40000000" Padding="12,0" Grid.Row="0">
+        <Border Grid.Row="0" Background="#20000000" Padding="12,0" >
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -46,12 +89,22 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Left: App Title -->
-                <TextBlock Text="GroupDatRom" 
-                   Grid.Column="0"
-                   VerticalAlignment="Center" 
-                   FontFamily="Arial Rounded MT Bold"
-                   FontSize="14" 
-                   FontWeight="SemiBold" />
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="pack://application:,,,/GroupDatRom;component/Resources/Blu-Ray-Wizard-32x32.png"
+                       Width="32" Height="32" 
+                       VerticalAlignment="Center" 
+                       Margin="0,0,8,0"
+                       RenderOptions.BitmapScalingMode="HighQuality"
+                       SnapsToDevicePixels="True"/>
+                    <TextBlock Text="GroupDatRom" 
+                        Grid.Column="0"
+                        VerticalAlignment="Center" 
+                        FontFamily="Arial Rounded MT Bold"
+                        FontSize="18"
+                        TextOptions.TextFormattingMode="Display"
+                        TextOptions.TextRenderingMode="ClearType"/>
+
+                </StackPanel>
 
                 <!-- Dark Mode Toggle -->
                 <ToggleButton Grid.Column="1" IsChecked="{Binding IsDarkMode, Mode=TwoWay}" >
@@ -59,10 +112,252 @@
                      Icon="{x:Static ui:FluentSystemIcons.BrightnessHigh_28_Filled}" 
                      VerticalAlignment="Center" />
                 </ToggleButton>
-  
+
             </Grid>
         </Border>
 
-        <!-- Main Content Area goes here -->
+        <!-- Rom Folder Picker -->
+        <Grid Grid.Row="1" Margin="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Label -->
+            <TextBlock Text="Roms Folder:" 
+               Grid.Column="0" 
+               VerticalAlignment="Center" 
+               Margin="0,0,10,0" />
+
+            <!-- TextBox fills the remaining space -->
+            <TextBox Grid.Column="1"  IsReadOnly="True" VerticalAlignment="Center" Text="{Binding RomDirPath}"/>
+
+            <!-- Browse Button pinned to the right -->
+            <Button Grid.Column="2" VerticalAlignment="Center" Margin="10,0,0,0" Width="100"
+                    Command="{Binding SetRomDirViaFolderBrowserCommand}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Folder_24_Regular}" 
+                         VerticalAlignment="Center" 
+                         Margin="0,0,5,0" />
+                    <TextBlock Text="Browse" 
+                       VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- Options Bar -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="10,0,10,0" HorizontalAlignment="Right">
+
+            <CheckBox Content="Also Produce .m3u" IsChecked="{Binding ProduceM3u}"/>
+
+            <Button Grid.Column="2" VerticalAlignment="Center" Margin="10,0,0,0" Width="100"
+                   Command="{Binding OpenRomFolderCommand}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.FolderOpen_24_Regular}" 
+                        VerticalAlignment="Center" 
+                        Margin="0,0,5,0" />
+                    <TextBlock Text="Open" 
+                      VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
+        <!-- Tree Views -->
+        <Grid Grid.Row="3" Margin="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="200" />
+                <ColumnDefinition Width="5" />
+                <ColumnDefinition Width="*" MinWidth="200" />
+                <ColumnDefinition Width="5" />
+                <ColumnDefinition Width="*" MinWidth="200" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Column 0: Scan Results Tree -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="Existing Structure" Padding="5"/>
+                    <Button Grid.Column="1" Background="Transparent" BorderThickness="0" Width="40"                             
+                        Command="{Binding CollapseScanTreeCommand}"
+                        CommandParameter="{Binding ElementName=ScanResultsTreeView}"
+                            ToolTip="Collapse All">
+                        <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.ChevronDoubleUp_20_Filled}" 
+                        VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    </Button>
+                </Grid>
+
+                <TreeView Grid.Row="1" BorderBrush="Gray" BorderThickness="1"
+                          x:Name="ScanResultsTreeView"
+                      ItemsSource="{Binding ScanResults.Children}"
+                      VirtualizingStackPanel.IsVirtualizing="True"
+                      VirtualizingStackPanel.VirtualizationMode="Recycling"
+                      Background="{DynamicResource {x:Static ui:ThemeKeys.ApplicationPageBackgroundThemeBrushKey}}"
+                      Foreground="{DynamicResource {x:Static ui:ThemeKeys.TextControlForegroundKey}}"
+                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="SelectedItemChanged">
+                            <i:InvokeCommandAction Command="{Binding SelectedNodeChangedCommand}" 
+                           PassEventArgsToCommand="True" />
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+
+                    <TreeView.ItemTemplate>
+                        <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                            <StackPanel Orientation="Horizontal" Margin="2">
+                                <Image Source="{Binding Type, Converter={StaticResource NodeTypeToImageConverter}}" 
+                                   Width="20" Height="20" 
+                                   VerticalAlignment="Center" 
+                                   Margin="0,0,5,0"
+                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                   SnapsToDevicePixels="True" ToolTip="{Binding Type}"/>
+                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" ToolTip="{Binding Name}"/>
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+                    </TreeView.ItemTemplate>
+
+                </TreeView>
+
+            </Grid>
+
+
+
+            <!-- Splitter 1 -->
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="#00000000" />
+
+            <!-- Column 2: Preview Results Tree -->
+
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="Proposed Structure" Padding="5"/>
+                    <Button Grid.Column="1" Background="Transparent" BorderThickness="0" Width="40"
+                            Command="{Binding CollapsePreviewTreeCommand}"
+                            CommandParameter="{Binding ElementName=PreviewResultsTreeView}"
+                            ToolTip="Collapse All">
+                        <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.ChevronDoubleUp_20_Filled}" 
+                        VerticalAlignment="Center" 
+                        Margin="0,0,5,0" />
+                    </Button>
+                </Grid>
+
+                <TreeView Grid.Row="1" BorderBrush="Gray" BorderThickness="1"
+                          x:Name="PreviewResultsTreeView"
+                      ItemsSource="{Binding PreviewResults.Children}"
+                      VirtualizingStackPanel.IsVirtualizing="True"
+                      VirtualizingStackPanel.VirtualizationMode="Recycling"
+                      Background="{DynamicResource {x:Static ui:ThemeKeys.ApplicationPageBackgroundThemeBrushKey}}"
+                      Foreground="{DynamicResource {x:Static ui:ThemeKeys.TextControlForegroundKey}}" 
+                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="SelectedItemChanged">
+                            <i:InvokeCommandAction Command="{Binding SelectedNodeChangedCommand}" 
+                                   PassEventArgsToCommand="True" />
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+
+                    <TreeView.ItemTemplate>
+                        <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                            <StackPanel Orientation="Horizontal" Margin="2">
+                                <Image Source="{Binding Type, Converter={StaticResource NodeTypeToImageConverter}}" 
+                                   Width="20" Height="20" 
+                                   VerticalAlignment="Center" 
+                                   Margin="0,0,5,0"
+                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                   SnapsToDevicePixels="True" ToolTip="{Binding Type}"/>
+                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" ToolTip="{Binding Name}"/>
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+                    </TreeView.ItemTemplate>
+
+                </TreeView>
+
+            </Grid>
+
+
+            <!-- Splitter 2 -->
+            <GridSplitter Grid.Column="3" Width="5" HorizontalAlignment="Stretch" Background="#00000000" />
+
+            <!-- Column 4: M3U / CUE File Contents Text Box -->
+            <Grid Grid.Column="4">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="cue/m3u/gdi preview" Padding="5"/>
+                <TextBox Grid.Row="1" BorderBrush="Gray" BorderThickness="1"
+                         IsReadOnly="True"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Auto"
+                         FontFamily="Consolas"
+                         Background="#20000000"
+                         Text="{Binding FilePreviewText}" />
+            </Grid>
+
+
+        </Grid>
+
+        <Grid Grid.Row="4">
+            <StackPanel Orientation="Horizontal" Margin="5" HorizontalAlignment="Right">
+
+                <Button Command="{Binding ScanFolderCommand}"  Margin="5" Width="120">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.FolderSearch_16_Regular}" 
+                                    VerticalAlignment="Center" 
+                                    Margin="0,0,5,0" />
+                        <TextBlock Text="Scan" 
+                  VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <Button Command="{Binding SetRomDirViaFolderBrowserCommand}"  Margin="5" Width="120" 
+                        IsEnabled="{Binding PreviewResults.Children.Count, Converter={StaticResource ZeroToFalseConverter}, FallbackValue=false}">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.VehicleTruckProfile_20_Regular}" 
+                                    VerticalAlignment="Center" 
+                                    Margin="0,0,5,0" />
+                        <TextBlock Text="Restructure" 
+                      VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="5">
+            <StatusBar Padding="5">
+                <StatusBarItem>
+                    <StackPanel Orientation="Horizontal">
+                        <ProgressBar Minimum="0" Maximum="100" Width="100" Height="15" Margin="5,0,5,0" Value="{Binding OperationProgressPercentage}"/>
+                        <TextBlock Text="{Binding OperationPrimaryText}" Margin="5,0,0,0"/>
+                        <TextBlock Text="{Binding OperationSecondaryText}" Margin="5,0,0,0"/>
+                    </StackPanel>
+                </StatusBarItem>
+            </StatusBar>
+        </Grid>
+
     </Grid>
 </Window>
