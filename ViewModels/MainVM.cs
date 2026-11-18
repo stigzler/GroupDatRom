@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Windows;
+using GroupDatRom.Models.Presentation;
 
 namespace GroupDatRom.ViewModels
 {
@@ -42,6 +43,9 @@ namespace GroupDatRom.ViewModels
         [ObservableProperty]
         private string filePreviewText;
 
+        [ObservableProperty]
+        private string playlistFilename;
+
         private readonly RomDirectoryScanner _romDirectoryScanner = new();
         private CancellationTokenSource _cts = new();
 
@@ -69,15 +73,25 @@ namespace GroupDatRom.ViewModels
             if (selectedNode.Type == NodeType.FileM3u && selectedNode.M3uLines != null)
             {
                 FilePreviewText = String.Join(Environment.NewLine, selectedNode.M3uLines);
+                PlaylistFilename = PriorityCuesheetFilename(selectedNode);
             }
             else if (selectedNode.Type == NodeType.FileCue && selectedNode.CueLines != null)
             {
                 FilePreviewText = String.Join(Environment.NewLine, selectedNode.CueLines);
+                PlaylistFilename = PriorityCuesheetFilename(selectedNode);
             }
             else
             {
                 FilePreviewText = string.Empty;
+                PlaylistFilename = string.Empty;
             }    
+        }
+
+        private string PriorityCuesheetFilename(FileObjectNode selectedNode)
+        {
+            if (!string.IsNullOrEmpty(selectedNode.SourceFullPath)) return Path.GetFileName(selectedNode.SourceFullPath);
+            else if (!string.IsNullOrEmpty(selectedNode.DestinationFullPath)) return Path.GetFileName(selectedNode.DestinationFullPath);
+            else return "unknown"; // this should never fire
         }
 
         [RelayCommand]

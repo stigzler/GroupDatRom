@@ -261,12 +261,19 @@
                     </Button>
                 </Grid>
 
-                <TreeView Grid.Row="1" BorderBrush="Gray" BorderThickness="1"
+                <TreeView Grid.Row="1" x:Name="PreviewResultsTreeView"  BorderBrush="Gray" BorderThickness="1"
                       ItemsSource="{Binding PreviewResults.Children}"
                       VirtualizingStackPanel.IsVirtualizing="True"
                       VirtualizingStackPanel.VirtualizationMode="Recycling"
                       Background="{DynamicResource {x:Static ui:ThemeKeys.ApplicationPageBackgroundThemeBrushKey}}"
                       Foreground="{DynamicResource {x:Static ui:ThemeKeys.TextControlForegroundKey}}">
+
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="SelectedItemChanged">
+                            <i:InvokeCommandAction Command="{Binding SelectedNodeChangedCommand}" 
+                                       PassEventArgsToCommand="True" />
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
 
                     <TreeView.ItemTemplate>
                         <HierarchicalDataTemplate ItemsSource="{Binding Children}">
@@ -278,7 +285,7 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
 
-                                <CheckBox Grid.Column="0" 
+                                <CheckBox Grid.Column="0"
                                           IsChecked="{Binding Selected, Mode=TwoWay}" 
                                           Visibility="{Binding ShowCheckbox, Converter={StaticResource BoolToVisConverter}}"
                                           VerticalAlignment="Center" 
@@ -295,9 +302,9 @@
                                        ToolTip="{Binding Type}"/>
 
                                 <TextBlock Grid.Column="2" 
-                           Text="{Binding Name}" 
-                           VerticalAlignment="Center" 
-                           ToolTip="{Binding Name}"/>
+                                            Text="{Binding Name}" 
+                                            VerticalAlignment="Center" 
+                                            ToolTip="{Binding Name}"/>
                             </Grid>
                         </HierarchicalDataTemplate>
                     </TreeView.ItemTemplate>
@@ -315,7 +322,7 @@
                     <RowDefinition Height="auto"/>
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Text="cue/m3u/gdi preview" Padding="5"/>
+                <TextBlock Grid.Row="0" Text="{Binding PlaylistFilename}" Padding="5"/>
                 <TextBox Grid.Row="1" BorderBrush="Gray" BorderThickness="1"
                          IsReadOnly="True"
                          AcceptsReturn="True"

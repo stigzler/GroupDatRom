@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text;
 
-namespace GroupDatRom.Models
+namespace GroupDatRom.Models.Presentation
 {
     internal partial class FileObjectNode: ObservableObject
     {

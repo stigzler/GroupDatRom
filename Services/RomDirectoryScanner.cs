@@ -13,6 +13,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using ProgressReport = GroupDatRom.Models.ProgressReport;
 using GroupDatRom.Extensions;
+using GroupDatRom.Models.Presentation;
+
 
 namespace GroupDatRom.Services
 {

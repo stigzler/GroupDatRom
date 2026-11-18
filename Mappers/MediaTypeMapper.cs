@@ -9,7 +9,8 @@ namespace GroupDatRom.Mappers
     internal static class MediaTypeMapper
     {
         private static readonly string ConfigFileName = "MediaTypeMappings.json";
-        private static List<string> _discTags = new() { "disc", "disk", "d", "cd" };
+        // Removed bare "d" to prevent matching arbitrary letters inside words like EasyFlash/Deutsch
+        private static List<string> _discTags = new() { "disc", "disk", "cd" };
         private static List<string> _sideTags = new() { "side" };
         private static List<string> _otherTags = new() { "tape", "cart", "part", "vol", "volume" };
 
@@ -53,8 +54,8 @@ namespace GroupDatRom.Mappers
         }
 
         /// <summary>
-        /// Checks if a filename contains a multi-media tag (e.g., "(Disc 1)", "(Side A)") 
-        /// anywhere in the filename and extracts the clean base group name.
+        /// Checks if a filename contains a media type keyword inside brackets/parentheses 
+        /// (e.g., "(Disc 1)", "[Disk A]", "(Side 1A)") and extracts the clean base group name.
         /// </summary>
         public static bool TryGetMultiMediaGroupName(string fileNameWithoutExtension, out string groupName)
         {
@@ -65,9 +66,9 @@ namespace GroupDatRom.Mappers
             allTags.AddRange(_sideTags);
             allTags.AddRange(_otherTags);
 
-            // Non-anchored regex: matches disc/side tags enclosed in brackets/parentheses anywhere in the string
+            // Use word boundaries \b so keywords like "disk" match whole words only, ignoring words like EasyFlash/Deutsch
             string tagKeywords = string.Join("|", allTags);
-            string pattern = $@"\s*[\[\(]\s*(?:{tagKeywords})\s*[\d\w\-\/\s]+[\]\)]\s*";
+            string pattern = $@"\s*[\[\(][^\]\)]*\b(?:{tagKeywords})\b[^\(\)\[\]]*[\]\)]\s*";
 
             var match = Regex.Match(fileNameWithoutExtension, pattern, RegexOptions.IgnoreCase);
             if (match.Success)
