@@ -125,7 +125,8 @@ namespace GroupDatRom.Services
                         Name = fileInfo.Name,
                         Type = fileNodeType,
                         SourceFullPath = fileInfo.FullName,
-                        DestinationFullPath = fileInfo.FullName
+                        DestinationFullPath = fileInfo.FullName,
+                        Parent = parentNode // <--- Assign parent link
                     };
 
                     // If it's an existing .m3u file found on disk, read its lines into the model
@@ -186,7 +187,8 @@ namespace GroupDatRom.Services
                         Name = subDirInfo.Name,
                         Type = folderType,
                         SourceFullPath = subDirInfo.FullName,
-                        DestinationFullPath = subDirInfo.FullName
+                        DestinationFullPath = subDirInfo.FullName,
+                        Parent = parentNode // <--- Assign parent link
                     };
 
                     parentNode.Children.Add(folderNode);
@@ -207,7 +209,8 @@ namespace GroupDatRom.Services
                     Name = scanResultsRoot.Name,
                     Type = NodeType.Root,
                     SourceFullPath = scanResultsRoot.SourceFullPath,
-                    DestinationFullPath = scanResultsRoot.DestinationFullPath
+                    DestinationFullPath = scanResultsRoot.DestinationFullPath,
+                    Parent = null
                 };
 
                 // Map group names to all items belonging to that group
@@ -220,7 +223,7 @@ namespace GroupDatRom.Services
 
                     if (child.Type == NodeType.FolderFull || child.Type == NodeType.FolderEmpty)
                     {
-                        previewRoot.Children.Add(CloneNodeStructure(child));
+                        previewRoot.Children.Add(CloneNodeStructure(child, previewRoot));
                         continue;
                     }
 
@@ -276,13 +279,16 @@ namespace GroupDatRom.Services
                         Name = groupName,
                         Type = NodeType.FolderFull,
                         SourceFullPath = null,
-                        DestinationFullPath = Path.Combine(Path.GetDirectoryName(groupItems[0].SourceFullPath) ?? "", groupName)
+                        DestinationFullPath = Path.Combine(Path.GetDirectoryName(groupItems[0].SourceFullPath) ?? "", groupName),
+                        Selected = true,
+                        Parent = previewRoot
                     };
 
                     foreach (var item in groupItems)
                     {
-                        var movedFileNode = CloneNodeStructure(item);
+                        var movedFileNode = CloneNodeStructure(item, groupFolderNode);
                         movedFileNode.DestinationFullPath = Path.Combine(groupFolderNode.DestinationFullPath ?? "", item.Name);
+                        movedFileNode.Selected = true;
                         groupFolderNode.Children.Add(movedFileNode);
                     }
 
@@ -314,10 +320,12 @@ namespace GroupDatRom.Services
                             var m3uNode = new FileObjectNode
                             {
                                 Name = m3uFileName,
-                                Type = NodeType.FileM3u, // Or NodeType.GeneratedM3u depending on your enum
+                                Type = NodeType.FileM3u,
                                 SourceFullPath = null,
                                 DestinationFullPath = Path.Combine(groupFolder.DestinationFullPath ?? "", m3uFileName),
-                                M3uLines = m3uLines // Populating the list property directly on the data object
+                                M3uLines = m3uLines,
+                                Selected = true,
+                                Parent = groupFolder
                             };
                             groupFolder.Children.Add(m3uNode);
                         }
@@ -326,15 +334,16 @@ namespace GroupDatRom.Services
 
                 foreach (var loose in looseFiles)
                 {
-                    previewRoot.Children.Add(CloneNodeStructure(loose));
+                    previewRoot.Children.Add(CloneNodeStructure(loose, previewRoot));
                 }
+
                 SortNodeRecursive(previewRoot);
                 progress?.Report(new ProgressReport { Message = "Preview tree built successfully.", Percentage = 100 });
                 return previewRoot;
             }, cancellationToken);
         }
 
-        private FileObjectNode CloneNodeStructure(FileObjectNode source)
+        private FileObjectNode CloneNodeStructure(FileObjectNode source, FileObjectNode? parent = null)
         {
             var clone = new FileObjectNode
             {
@@ -342,13 +351,15 @@ namespace GroupDatRom.Services
                 Type = source.Type,
                 SourceFullPath = source.SourceFullPath,
                 DestinationFullPath = source.DestinationFullPath,
+                Selected = source.Selected,
+                Parent = parent, // <--- Assigned here
                 M3uLines = source.M3uLines != null ? new List<string>(source.M3uLines) : null,
-                CueLines = source.CueLines != null ? new List<string>(source.CueLines) : null 
+                CueLines = source.CueLines != null ? new List<string>(source.CueLines) : null
             };
 
             foreach (var child in source.Children)
             {
-                clone.Children.Add(CloneNodeStructure(child));
+                clone.Children.Add(CloneNodeStructure(child, clone)); // <--- Pass clone as parent
             }
 
             return clone;
@@ -518,7 +529,8 @@ namespace GroupDatRom.Services
                             Name = partName,
                             Type = NodeType.FolderFull,
                             SourceFullPath = null,
-                            DestinationFullPath = null
+                            DestinationFullPath = null,
+                            Parent = currentParent // <--- Assign parent link
                         };
                         currentParent.Children.Add(existingFolder);
                     }
@@ -533,7 +545,8 @@ namespace GroupDatRom.Services
                         Name = partName,
                         Type = internalFileType,
                         SourceFullPath = $"{archiveFilePath}!{entryPath}",
-                        DestinationFullPath = null
+                        DestinationFullPath = null,
+                        Parent = currentParent // Set parent link here too
                     };
                     currentParent.Children.Add(fileChildNode);
                 }

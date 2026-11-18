@@ -30,6 +30,7 @@
             <convs:NodeTypeToImageConverter x:Key="NodeTypeToImageConverter"/>
             <convs:InverseBoolConverter x:Key="InverseBoolConverter"/>
             <convs:ZeroToFalseConverter x:Key="ZeroToFalseConverter"/>
+            <convs:BoolToVisConverter x:Key="BoolToVisConverter"/>
             <!-- Force classic visible scrollbars on TreeViews -->
             <!-- Custom ScrollBar Style for Visible, Styled Handles -->
             <Style TargetType="{x:Type ScrollBar}">
@@ -261,35 +262,45 @@
                 </Grid>
 
                 <TreeView Grid.Row="1" BorderBrush="Gray" BorderThickness="1"
-                          x:Name="PreviewResultsTreeView"
                       ItemsSource="{Binding PreviewResults.Children}"
                       VirtualizingStackPanel.IsVirtualizing="True"
                       VirtualizingStackPanel.VirtualizationMode="Recycling"
                       Background="{DynamicResource {x:Static ui:ThemeKeys.ApplicationPageBackgroundThemeBrushKey}}"
-                      Foreground="{DynamicResource {x:Static ui:ThemeKeys.TextControlForegroundKey}}" 
-                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-
-                    <i:Interaction.Triggers>
-                        <i:EventTrigger EventName="SelectedItemChanged">
-                            <i:InvokeCommandAction Command="{Binding SelectedNodeChangedCommand}" 
-                                   PassEventArgsToCommand="True" />
-                        </i:EventTrigger>
-                    </i:Interaction.Triggers>
+                      Foreground="{DynamicResource {x:Static ui:ThemeKeys.TextControlForegroundKey}}">
 
                     <TreeView.ItemTemplate>
                         <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                            <StackPanel Orientation="Horizontal" Margin="2">
-                                <Image Source="{Binding Type, Converter={StaticResource NodeTypeToImageConverter}}" 
-                                   Width="20" Height="20" 
-                                   VerticalAlignment="Center" 
-                                   Margin="0,0,5,0"
-                                   RenderOptions.BitmapScalingMode="HighQuality"
-                                   SnapsToDevicePixels="True" ToolTip="{Binding Type}"/>
-                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" ToolTip="{Binding Name}"/>
-                            </StackPanel>
+                            <!-- Fixed-width Grid columns lock spacing, preventing iNKORE padding gaps -->
+                            <Grid VerticalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="24"/>
+                                    <ColumnDefinition Width="28"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <CheckBox Grid.Column="0" 
+                                          IsChecked="{Binding Selected, Mode=TwoWay}" 
+                                          Visibility="{Binding ShowCheckbox, Converter={StaticResource BoolToVisConverter}}"
+                                          VerticalAlignment="Center" 
+                                          HorizontalAlignment="Left"
+                                          Margin="0"/>
+
+                                <Image Grid.Column="1" 
+                                       Source="{Binding Type, Converter={StaticResource NodeTypeToImageConverter}}" 
+                                       Width="20" Height="20" 
+                                       VerticalAlignment="Center" 
+                                       HorizontalAlignment="Left"
+                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                       SnapsToDevicePixels="True" 
+                                       ToolTip="{Binding Type}"/>
+
+                                <TextBlock Grid.Column="2" 
+                           Text="{Binding Name}" 
+                           VerticalAlignment="Center" 
+                           ToolTip="{Binding Name}"/>
+                            </Grid>
                         </HierarchicalDataTemplate>
                     </TreeView.ItemTemplate>
-
                 </TreeView>
 
             </Grid>
