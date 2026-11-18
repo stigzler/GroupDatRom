@@ -19,6 +19,8 @@ namespace GroupDatRom.ViewModels
         [ObservableProperty]
         private bool isDarkMode = true;
 
+        private readonly RomRestructureService _romRestructureService = new();
+
         [ObservableProperty]
         private string romDirPath = string.Empty;
 
@@ -46,6 +48,19 @@ namespace GroupDatRom.ViewModels
         [ObservableProperty]
         private string playlistFilename;
 
+        [ObservableProperty]
+        private string appVersion = $"V{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString()}";
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(OperationInProgress))]
+        private bool restructuring = false;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(OperationInProgress))]
+        private bool scanning = false;
+
+        public bool OperationInProgress => (Scanning || Restructuring);
+
         private readonly RomDirectoryScanner _romDirectoryScanner = new();
         private CancellationTokenSource _cts = new();
 
@@ -62,6 +77,60 @@ namespace GroupDatRom.ViewModels
             {
                 RomDirPath = Properties.Settings.Default.LastRomDirPath;
             }
+        }
+
+        [RelayCommand]
+        private async Task RestructureAsync()
+        {
+            if (PreviewResults == null || string.IsNullOrWhiteSpace(RomDirPath) || !Directory.Exists(RomDirPath))
+            {
+                return;
+            }
+
+            Restructuring = true;
+
+            OperationPrimaryText = "Restructuring: ";
+            OperationSecondaryText = "Running folder restructure...";
+            OperationProgressPercentage = 0;
+
+            try
+            {
+                var progress = new Progress<ProgressReport>(report =>
+                {
+                    if (!string.IsNullOrEmpty(report.Message))
+                    {
+                        OperationSecondaryText = report.Message;
+                    }
+
+                    if (report.Percentage > 0)
+                    {
+                        OperationProgressPercentage = report.Percentage;
+                    }
+                });
+
+                await _romRestructureService.ExecuteRestructureAsync(PreviewResults, RomDirPath, progress, _cts.Token);
+
+                OperationPrimaryText = "Restructure Complete: ";
+                OperationSecondaryText = "ROMs restructured successfully.";
+                OperationProgressPercentage = 100;
+            }
+            catch (OperationCanceledException)
+            {
+                OperationPrimaryText = "Cancelled: ";
+                OperationSecondaryText = "Restructure cancelled.";
+                OperationProgressPercentage = 0;
+            }
+            catch (Exception ex)
+            {
+                OperationPrimaryText = "Error";
+                OperationSecondaryText = ex.Message;
+                OperationProgressPercentage = 0;
+            }
+            finally
+            {
+                Restructuring = false;
+            }
+            ClearResults();
         }
 
         [RelayCommand]
@@ -89,6 +158,7 @@ namespace GroupDatRom.ViewModels
 
         private string PriorityCuesheetFilename(FileObjectNode selectedNode)
         {
+            if (!string.IsNullOrEmpty(selectedNode.Name)) return selectedNode.Name;
             if (!string.IsNullOrEmpty(selectedNode.SourceFullPath)) return Path.GetFileName(selectedNode.SourceFullPath);
             else if (!string.IsNullOrEmpty(selectedNode.DestinationFullPath)) return Path.GetFileName(selectedNode.DestinationFullPath);
             else return "unknown"; // this should never fire
@@ -177,12 +247,20 @@ namespace GroupDatRom.ViewModels
         }
 
         [RelayCommand]
+        private void CancelOperation()
+        {
+            _cts?.Cancel();
+        }
+
+        [RelayCommand]
         private async Task ScanFolderAsync()
         {
             if (string.IsNullOrWhiteSpace(RomDirPath) || !Directory.Exists(RomDirPath))
             {
                 return;
             }
+
+            Scanning = true;
 
             _cts?.Cancel();
             _cts?.Dispose();
@@ -212,7 +290,7 @@ namespace GroupDatRom.ViewModels
                 OperationPrimaryText = "Building Preview: ";
                 OperationSecondaryText = "Initialising Build...";
 
-                PreviewResults = await _romDirectoryScanner.BuildPreviewResultsTreeAsync(ScanResults, true, progress, _cts.Token);
+                PreviewResults = await _romDirectoryScanner.BuildPreviewResultsTreeAsync(ScanResults, ProduceM3u, progress, _cts.Token);
 
                 OperationPrimaryText = "Scan Successful";
                 OperationSecondaryText = string.Empty;
@@ -220,7 +298,7 @@ namespace GroupDatRom.ViewModels
             }
             catch (OperationCanceledException)
             {
-                OperationPrimaryText = "Cancelled";
+                OperationPrimaryText = "Cancelled:";
                 OperationSecondaryText = "Scan cancelled.";
                 OperationProgressPercentage = 0;
             }
@@ -229,6 +307,10 @@ namespace GroupDatRom.ViewModels
                 OperationPrimaryText = "Error";
                 OperationSecondaryText = ex.Message;
                 OperationProgressPercentage = 0;
+            }
+            finally
+            {
+                Scanning = false;
             }
         }
     }

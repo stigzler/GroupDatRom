@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+	  <Version>0.8.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,6 +27,7 @@
     <None Remove="Icons\FileVintageMedia.png" />
     <None Remove="Icons\FolderEmpty.png" />
     <None Remove="Icons\FolderFull.png" />
+    <None Remove="Icons\FolderNew.png" />
     <None Remove="Icons\Root.png" />
     <None Remove="Resources\Blu-Ray-Wizard-32x32.png" />
   </ItemGroup>
@@ -80,6 +82,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Icons\FolderFull.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Icons\FolderNew.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Icons\Root.png">

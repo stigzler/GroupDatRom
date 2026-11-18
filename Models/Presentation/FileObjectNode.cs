@@ -19,12 +19,16 @@ namespace GroupDatRom.Models.Presentation
 
         [ObservableProperty]
         private NodeType type;
-        public ObservableCollection<FileObjectNode> Children { get; } = new();
+        // Explicitly tracks internal relative path if this node lives inside an archive
+        public string? ArchiveEntryPath { get; set; }
 
+        public ObservableCollection<FileObjectNode> Children { get; } = new();
         public List<string> CueLines { get; set; }
 
         public string DestinationFullPath { get; set; }
 
+        // Computed helper to instantly check if a node is inside an archive without string parsing
+        public bool IsArchiveEntry => !string.IsNullOrEmpty(ArchiveEntryPath);
         // Returns true if an ANCESTOR (parent up the tree) is an Archive
         public bool IsNestedWithinArchive {
             get {
@@ -51,8 +55,8 @@ namespace GroupDatRom.Models.Presentation
         // Backreference to parent for tree traversal
         public FileObjectNode? Parent { get; set; }
 
-        // Show checkbox if we are NOT nested inside an archive
-        public bool ShowCheckbox => IsNestedWithinArchive == false;
+        // Show checkbox on loose files and new group folders, but hide on existing folders (FolderFull, FolderEmpty)
+        public bool ShowCheckbox => Type == NodeType.FolderNew;
 
         public string SourceFullPath { get; set; }
         public void SetSelectedRecursive(bool value)

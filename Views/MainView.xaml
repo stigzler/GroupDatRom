@@ -23,7 +23,7 @@
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ui:ThemeResources AccentColor="#009000" />
+                <ui:ThemeResources AccentColor="#553e98" />
                 <ui:ThemeResources RequestedTheme="Dark"/>
                 <ui:XamlControlsResources />
             </ResourceDictionary.MergedDictionaries>
@@ -136,7 +136,9 @@
 
             <!-- Browse Button pinned to the right -->
             <Button Grid.Column="2" VerticalAlignment="Center" Margin="10,0,0,0" Width="100"
-                    Command="{Binding SetRomDirViaFolderBrowserCommand}">
+                    Command="{Binding SetRomDirViaFolderBrowserCommand}"
+                    IsEnabled="{Binding Restructuring, Converter={StaticResource InverseBoolConverter}}">
+
                 <StackPanel Orientation="Horizontal">
                     <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Folder_24_Regular}" 
                          VerticalAlignment="Center" 
@@ -215,15 +217,26 @@
 
                     <TreeView.ItemTemplate>
                         <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                            <StackPanel Orientation="Horizontal" Margin="2">
-                                <Image Source="{Binding Type, Converter={StaticResource NodeTypeToImageConverter}}" 
-                                   Width="20" Height="20" 
-                                   VerticalAlignment="Center" 
-                                   Margin="0,0,5,0"
-                                   RenderOptions.BitmapScalingMode="HighQuality"
-                                   SnapsToDevicePixels="True" ToolTip="{Binding Type}"/>
-                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" ToolTip="{Binding Name}"/>
-                            </StackPanel>
+                            <Grid VerticalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="28"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Image Grid.Column="0" 
+                                       Source="{Binding Type, Converter={StaticResource NodeTypeToImageConverter}}" 
+                                       Width="20" Height="20" 
+                                       VerticalAlignment="Center" 
+                                       HorizontalAlignment="Left"
+                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                       SnapsToDevicePixels="True" 
+                                       ToolTip="{Binding Type}"/>
+
+                                <TextBlock Grid.Column="1" 
+                        Text="{Binding Name}" 
+                        VerticalAlignment="Center" 
+                        ToolTip="{Binding Name}"/>
+                            </Grid>
                         </HierarchicalDataTemplate>
                     </TreeView.ItemTemplate>
 
@@ -290,7 +303,7 @@
                                           Visibility="{Binding ShowCheckbox, Converter={StaticResource BoolToVisConverter}}"
                                           VerticalAlignment="Center" 
                                           HorizontalAlignment="Left"
-                                          Margin="0"/>
+                                          Margin="0" ToolTip="Include this new folder in the Restructure"/>
 
                                 <Image Grid.Column="1" 
                                        Source="{Binding Type, Converter={StaticResource NodeTypeToImageConverter}}" 
@@ -340,7 +353,26 @@
         <Grid Grid.Row="4">
             <StackPanel Orientation="Horizontal" Margin="5" HorizontalAlignment="Right">
 
-                <Button Command="{Binding ScanFolderCommand}"  Margin="5" Width="120">
+                <Button Command="{Binding CancelOperationCommand}"  Margin="5" Width="120" 
+                      Visibility="{Binding OperationInProgress, Converter={StaticResource BoolToVisConverter}}">
+
+                    <FrameworkElement.Resources>
+                        <SolidColorBrush x:Key="{x:Static ui:ThemeKeys.ButtonBackgroundKey}" Color="#a0D80000"/>
+                        <SolidColorBrush x:Key="{x:Static ui:ThemeKeys.ButtonBorderBrushKey}" Color="#A0960000"/>
+                        <SolidColorBrush x:Key="{x:Static ui:ThemeKeys.ButtonBackgroundPointerOverKey}" Color="#80E90000"/>
+                        <SolidColorBrush x:Key="{x:Static ui:ThemeKeys.ButtonBorderBrushPointerOverKey}" Color="#A0C00000"/>
+                    </FrameworkElement.Resources>
+
+                    <StackPanel Orientation="Horizontal">
+                        <ui:FontIcon Icon="{x:Static ui:SegoeFluentIcons.Cancel}" 
+                                  VerticalAlignment="Center" 
+                                  Margin="0,0,5,0" />
+                        <TextBlock Text="Cancel" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <Button Command="{Binding ScanFolderCommand}"  Margin="5" Width="120" 
+                        IsEnabled="{Binding Restructuring, Converter={StaticResource InverseBoolConverter}}">
                     <StackPanel Orientation="Horizontal">
                         <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.FolderSearch_16_Regular}" 
                                     VerticalAlignment="Center" 
@@ -350,7 +382,7 @@
                     </StackPanel>
                 </Button>
 
-                <Button Command="{Binding SetRomDirViaFolderBrowserCommand}"  Margin="5" Width="120" 
+                <Button Command="{Binding RestructureCommand}"  Margin="5" Width="120" 
                         IsEnabled="{Binding PreviewResults.Children.Count, Converter={StaticResource ZeroToFalseConverter}, FallbackValue=false}">
                     <StackPanel Orientation="Horizontal">
                         <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.VehicleTruckProfile_20_Regular}" 
@@ -365,14 +397,25 @@
             </StackPanel>
         </Grid>
 
+        <!-- Status Bar -->
+
         <Grid Grid.Row="5">
             <StatusBar Padding="5">
                 <StatusBarItem>
-                    <StackPanel Orientation="Horizontal">
-                        <ProgressBar Minimum="0" Maximum="100" Width="100" Height="15" Margin="5,0,5,0" Value="{Binding OperationProgressPercentage}"/>
-                        <TextBlock Text="{Binding OperationPrimaryText}" Margin="5,0,0,0"/>
-                        <TextBlock Text="{Binding OperationSecondaryText}" Margin="5,0,0,0"/>
-                    </StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <ProgressBar Grid.Column="0" Minimum="0" Maximum="100" Width="100" Height="15" Margin="5,0,5,0" Value="{Binding OperationProgressPercentage}"/>
+                        <TextBlock Grid.Column="1" Text="{Binding OperationPrimaryText}" Margin="5,0,0,0"/>
+                        <TextBlock Grid.Column="2" Text="{Binding OperationSecondaryText}" Margin="5,0,0,0"/>
+                        <TextBlock Grid.Column="3" Text="{Binding AppVersion}" Margin="5,0,0,0" HorizontalAlignment="Right" Padding="0,0,5,0"/>
+                    </Grid>
+
                 </StatusBarItem>
             </StatusBar>
         </Grid>

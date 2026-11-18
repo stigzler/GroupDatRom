@@ -9,6 +9,7 @@ namespace GroupDatRom.Models
         Root,
         FolderFull,
         FolderEmpty,
+        FolderNew,
 
         // Playlists & Track Layouts
         FileM3u,

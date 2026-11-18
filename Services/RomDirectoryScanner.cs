@@ -279,7 +279,7 @@ namespace GroupDatRom.Services
                     var groupFolderNode = new FileObjectNode
                     {
                         Name = groupName,
-                        Type = NodeType.FolderFull,
+                        Type = NodeType.FolderNew,
                         SourceFullPath = null,
                         DestinationFullPath = Path.Combine(Path.GetDirectoryName(groupItems[0].SourceFullPath) ?? "", groupName),
                         Selected = true,
@@ -353,15 +353,16 @@ namespace GroupDatRom.Services
                 Type = source.Type,
                 SourceFullPath = source.SourceFullPath,
                 DestinationFullPath = source.DestinationFullPath,
+                ArchiveEntryPath = source.ArchiveEntryPath, // <--- Copy property over during clones
                 Selected = source.Selected,
-                Parent = parent, // <--- Assigned here
+                Parent = parent,
                 M3uLines = source.M3uLines != null ? new List<string>(source.M3uLines) : null,
                 CueLines = source.CueLines != null ? new List<string>(source.CueLines) : null
             };
 
             foreach (var child in source.Children)
             {
-                clone.Children.Add(CloneNodeStructure(child, clone)); // <--- Pass clone as parent
+                clone.Children.Add(CloneNodeStructure(child, clone));
             }
 
             return clone;
@@ -490,7 +491,10 @@ namespace GroupDatRom.Services
 
             // Sort the children into a temporary list
             var sortedChildren = node.Children
-                .OrderBy(c => c.Type == NodeType.FolderFull || c.Type == NodeType.FolderEmpty ? 0 : 1)
+                .OrderBy(c => c.Type == NodeType.FolderNew ? 0 : 1)
+                .ThenBy(c => c.Type == NodeType.FolderFull ? 0 : 1)
+                .ThenBy(c => c.Type == NodeType.FolderEmpty ? 0 : 1)
+                .ThenBy(c => c.Type == NodeType.Archive ? 0 : 1)
                 .ThenBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
@@ -522,17 +526,18 @@ namespace GroupDatRom.Services
                 {
                     var existingFolder = currentParent.Children
                         .FirstOrDefault(c => c.Name.Equals(partName, StringComparison.OrdinalIgnoreCase)
-                                          && (c.Type == NodeType.FolderFull || c.Type == NodeType.FolderEmpty));
-
+                                          && (c.Type == NodeType.FolderFull || c.Type == NodeType.FolderEmpty || c.Type == NodeType.FolderNew)); 
+                    
                     if (existingFolder == null)
                     {
                         existingFolder = new FileObjectNode
                         {
                             Name = partName,
                             Type = NodeType.FolderFull,
-                            SourceFullPath = null,
+                            SourceFullPath = archiveFilePath, // Container path
+                            ArchiveEntryPath = null,
                             DestinationFullPath = null,
-                            Parent = currentParent // <--- Assign parent link
+                            Parent = currentParent
                         };
                         currentParent.Children.Add(existingFolder);
                     }
@@ -546,9 +551,10 @@ namespace GroupDatRom.Services
                     {
                         Name = partName,
                         Type = internalFileType,
-                        SourceFullPath = $"{archiveFilePath}!{entryPath}",
+                        SourceFullPath = archiveFilePath, // Clean physical path to the .zip file
+                        ArchiveEntryPath = entryPath,     // Clean internal relative path (e.g., "Wipeout 3 (USA).cue")
                         DestinationFullPath = null,
-                        Parent = currentParent // Set parent link here too
+                        Parent = currentParent
                     };
                     currentParent.Children.Add(fileChildNode);
                 }

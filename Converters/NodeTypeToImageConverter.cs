@@ -20,6 +20,7 @@ namespace GroupDatRom.Converters
                 NodeType.Root => "Root.png",
                 NodeType.FolderFull => "FolderFull.png",
                 NodeType.FolderEmpty => "FolderEmpty.png",
+                NodeType.FolderNew => "FolderNew.png",
                 NodeType.FileM3u => "FileM3u.png",
                 NodeType.FileCue => "FileCue.png",
                 NodeType.FileGdi => "FileGdi.png",
