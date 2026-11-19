@@ -11,6 +11,7 @@ using System.IO;
 using System.Text;
 using System.Windows;
 using GroupDatRom.Models.Presentation;
+using System.Windows.Media;
 
 namespace GroupDatRom.ViewModels
 {
@@ -234,6 +235,14 @@ namespace GroupDatRom.ViewModels
         {
             ScanResults?.Children.Clear();
             PreviewResults?.Children.Clear();
+            ClearPlaylistText();
+        }
+
+        private void ClearPlaylistText()
+        {
+            PlaylistFilename = string.Empty;
+            FilePreviewText = string.Empty;
+
         }
 
         internal void OnViewClosing()
@@ -334,6 +343,7 @@ namespace GroupDatRom.ViewModels
             finally
             {
                 Scanning = false;
+                ClearPlaylistText();
             }
         }
     }

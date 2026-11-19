@@ -10,9 +10,9 @@ namespace GroupDatRom.Mappers
     {
         private static readonly string ConfigFileName = "MediaTypeMappings.json";
         // Removed bare "d" to prevent matching arbitrary letters inside words like EasyFlash/Deutsch
-        private static List<string> _discTags = new() { "disc", "disk", "cd" };
+        private static List<string> _discTags = new() { "disc", "disk", "cd", "dvd", "cd-rom", "datadisk" };
         private static List<string> _sideTags = new() { "side" };
-        private static List<string> _otherTags = new() { "tape", "cart", "part", "vol", "volume" };
+        private static List<string> _otherTags = new() { "tape", "cart", "part", "vol", "volume", "cassette", "cartridge" };
 
         public static void Initialize()
         {
@@ -66,26 +66,20 @@ namespace GroupDatRom.Mappers
             allTags.AddRange(_sideTags);
             allTags.AddRange(_otherTags);
 
-            // Use word boundaries \b so keywords like "disk" match whole words only, ignoring words like EasyFlash/Deutsch
-            string tagKeywords = string.Join("|", allTags);
-            string pattern = $@"\s*[\[\(][^\]\)]*\b(?:{tagKeywords})\b[^\(\)\[\]]*[\]\)]\s*";
+            string tagKeywords = string.Join("|", allTags.Select(Regex.Escape));
+            string pattern = $@"[\[\(][^\]\)]*\b(?:{tagKeywords})\b[^\(\)\[\]]*[\]\)]";
 
-            var match = Regex.Match(fileNameWithoutExtension, pattern, RegexOptions.IgnoreCase);
-            if (match.Success)
+            string cleaned = Regex.Replace(fileNameWithoutExtension, pattern, " ", RegexOptions.IgnoreCase);
+            cleaned = Regex.Replace(cleaned, @"\s{2,}", " ").Trim();
+
+            if (!string.IsNullOrEmpty(cleaned) && !cleaned.Equals(fileNameWithoutExtension, StringComparison.OrdinalIgnoreCase))
             {
-                // Remove the media tag from wherever it sits in the filename
-                string cleaned = fileNameWithoutExtension.Replace(match.Value, " ");
-                cleaned = Regex.Replace(cleaned, @"\s{2,}", " "); // Collapse double spaces
-                cleaned = cleaned.Trim();
-
-                if (!string.IsNullOrEmpty(cleaned) && !cleaned.Equals(fileNameWithoutExtension, StringComparison.OrdinalIgnoreCase))
-                {
-                    groupName = cleaned;
-                    return true;
-                }
+                groupName = cleaned;
+                return true;
             }
 
             return false;
         }
     }
+    
 }

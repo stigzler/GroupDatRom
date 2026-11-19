@@ -313,6 +313,7 @@ namespace GroupDatRom.Services
                                         c.Type == NodeType.FileCue ||
                                         c.Type == NodeType.FileGdi ||
                                         c.Type == NodeType.FileStandardIso)
+                            .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
                             .Select(c => c.Name)
                             .ToList();
 
