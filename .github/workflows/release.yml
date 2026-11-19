@@ -1,0 +1,41 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Publish Release
+        run: dotnet publish -c Release -r win-x64 --self-contained false -o ./publish_output
+
+      - name: Zip published folder
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          Compress-Archive -Path "./publish_output/*" -DestinationPath "./GroupDatRom-$tag-win-x64.zip" -Force
+
+      - name: Create GitHub Release and upload zip
+        uses: softprops/action-gh-release@v3
+        with:
+          files: GroupDatRom-*-win-x64.zip
+          generate_release_notes: true
+          fail_on_unmatched_files: true
