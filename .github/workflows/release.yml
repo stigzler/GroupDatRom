@@ -28,15 +28,14 @@ jobs:
 
       - name: Check if release already exists
         id: check
+        shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.ver.outputs.tag }}
         run: |
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
+          gh release view $env:TAG *> $null
+          $exists = if ($LASTEXITCODE -eq 0) { "true" } else { "false" }
+          "exists=$exists" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Setup .NET
         if: steps.check.outputs.exists == 'false'
