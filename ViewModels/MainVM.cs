@@ -59,6 +59,9 @@ namespace GroupDatRom.ViewModels
         [NotifyPropertyChangedFor(nameof(OperationInProgress))]
         private bool scanning = false;
 
+        [ObservableProperty]
+        UpdateInfo updateInfo;
+
         public bool OperationInProgress => (Scanning || Restructuring);
 
         private readonly RomDirectoryScanner _romDirectoryScanner = new();
@@ -77,6 +80,21 @@ namespace GroupDatRom.ViewModels
             {
                 RomDirPath = Properties.Settings.Default.LastRomDirPath;
             }
+
+            // 3. Check for updates
+            CheckForUpdates();
+        }
+
+        [RelayCommand]
+        private void OpenDownloadPage()
+        {
+            UpdateChecker.OpenUrl(UpdateInfo.ReleasePageUrl);
+        }
+
+
+        private async void CheckForUpdates()
+        {
+            UpdateInfo = await UpdateChecker.CheckForUpdatesAsync();
         }
 
         [RelayCommand]
@@ -236,6 +254,11 @@ namespace GroupDatRom.ViewModels
             RomDirPath = openFolderDialog.FolderName;
 
             ClearResults();
+
+            OperationPrimaryText = "Rom Folder changed to:";
+            OperationProgressPercentage = 0;
+            OperationSecondaryText = $"{RomDirPath}";
+
         }
 
         partial void OnIsDarkModeChanged(bool value)

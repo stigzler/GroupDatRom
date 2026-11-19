@@ -143,7 +143,7 @@
                     <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Folder_24_Regular}" 
                          VerticalAlignment="Center" 
                          Margin="0,0,5,0" />
-                    <TextBlock Text="Browse" 
+                    <TextBlock Text="Browse" ToolTip="Change Rom Folder"
                        VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
@@ -152,7 +152,7 @@
         <!-- Options Bar -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="10,0,10,0" HorizontalAlignment="Right">
 
-            <CheckBox Content="Also Produce .m3u" IsChecked="{Binding ProduceM3u}"/>
+            <CheckBox Content="Also Produce .m3u" IsChecked="{Binding ProduceM3u}" ToolTip="Also produce an .m3u file when grouping roms (only works for some rom types)"/>
 
             <Button Grid.Column="2" VerticalAlignment="Center" Margin="10,0,0,0" Width="100"
                    Command="{Binding OpenRomFolderCommand}">
@@ -160,7 +160,7 @@
                     <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.FolderOpen_24_Regular}" 
                         VerticalAlignment="Center" 
                         Margin="0,0,5,0" />
-                    <TextBlock Text="Open" 
+                    <TextBlock Text="Open" ToolTip="Open Rom Folder"
                       VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
@@ -413,7 +413,28 @@
                         <ProgressBar Grid.Column="0" Minimum="0" Maximum="100" Width="100" Height="15" Margin="5,0,5,0" Value="{Binding OperationProgressPercentage}"/>
                         <TextBlock Grid.Column="1" Text="{Binding OperationPrimaryText}" Margin="5,0,0,0"/>
                         <TextBlock Grid.Column="2" Text="{Binding OperationSecondaryText}" Margin="5,0,0,0"/>
-                        <TextBlock Grid.Column="3" Text="{Binding AppVersion}" Margin="5,0,0,0" HorizontalAlignment="Right" Padding="0,0,5,0"/>
+                        <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <TextBlock  Text="{Binding AppVersion}" Margin="5,0,0,0"  Padding="0,0,5,0" Opacity="0.6"/>
+                            <Button Command="{Binding OpenDownloadPageCommand}"
+                                    Width="24"
+                                    Height="20"
+                                    MinWidth="0"
+                                    MinHeight="0"
+                                    Padding="0"
+                                    Margin="4,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    ToolTip="Update Available"
+                                    Visibility="{Binding UpdateInfo.IsUpdateAvailable, Converter={StaticResource BoolToVisConverter}}">
+                                <ui:FontIcon Foreground="#FF4500" Icon="{x:Static ui:FluentSystemIcons.ArrowDownExclamation_24_Filled}"
+                 FontSize="14"
+                 HorizontalAlignment="Center"
+                 VerticalAlignment="Center" />
+                            </Button>
+
+                        </StackPanel >
+
                     </Grid>
 
                 </StatusBarItem>
