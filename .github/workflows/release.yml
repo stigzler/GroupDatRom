@@ -1,6 +1,12 @@
 name: Build and Release
 
 on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release tag/version (e.g. v0.9.3)'
+        required: false
+        type: string
   push:
     tags:
       - 'v*'
@@ -17,6 +23,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Resolve release tag
+        id: tag
+        shell: pwsh
+        run: |
+          $raw = "${{ inputs.version }}"
+          if ([string]::IsNullOrWhiteSpace($raw)) {
+            if ("${{ github.ref_type }}" -eq "tag") {
+              $raw = "${{ github.ref_name }}"
+            } else {
+              [xml]$csproj = Get-Content "./GroupDatRom.csproj"
+              $raw = ($csproj.Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1).Trim()
+            }
+          }
+          if ([string]::IsNullOrWhiteSpace($raw)) { throw "Could not determine release version/tag." }
+          $tag = if ($raw.StartsWith("v") -or $raw.StartsWith("V")) { $raw } else { "v$raw" }
+          "value=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -31,12 +54,14 @@ jobs:
       - name: Zip published folder
         shell: pwsh
         run: |
-          $tag = "${{ github.ref_name }}"
+          $tag = "${{ steps.tag.outputs.value }}"
           Compress-Archive -Path "./publish_output/*" -DestinationPath "./GroupDatRom-$tag-win-x64.zip" -Force
 
       - name: Create GitHub Release and upload zip
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ steps.tag.outputs.value }}
+          name: Release ${{ steps.tag.outputs.value }}
           files: GroupDatRom-*-win-x64.zip
           generate_release_notes: true
           fail_on_unmatched_files: true
