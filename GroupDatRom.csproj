@@ -6,7 +6,7 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UseWPF>true</UseWPF>
-		<Version>0.9.8</Version>
+		<Version>0.9.10</Version>
 	</PropertyGroup>
 
 	<Target Name="TriggerGitHubReleaseBuild" AfterTargets="Build" Condition="'$(Configuration)' == 'Release' and '$(GITHUB_ACTIONS)' != 'true'">
